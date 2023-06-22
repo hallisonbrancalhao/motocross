@@ -6,6 +6,11 @@ const width = innerWidth
 const height = innerHeight
 const canvas = create('canvas', {width, height})
 const contexto = canvas.getContext('2d')!
+
+const vidasIniciais = 3 // Quantidade inicial de vidas
+let vidas = vidasIniciais
+let gameOver = false
+
 append(canvas)()
 
 const tamanho = 50
@@ -19,13 +24,13 @@ const Tecla: Record<string, number> = {
 
 let tempo = 0
 let velocidade = 0
-let jogando = true
 
 class Piloto {
-  posicao = {
+  posicaoInicial = {
     x: width / 2,
     y: 0,
   }
+  posicao = {...this.posicaoInicial}
 
   velocidade = {
     vertical: 0,
@@ -38,6 +43,15 @@ class Piloto {
 
   constructor() {
     this.imagem.src = 'piloto.svg'
+  }
+
+  reiniciar() {
+    this.posicao = {...this.posicaoInicial}
+    this.velocidade = {
+      vertical: 0,
+      rotacao: 0,
+    }
+    this.rotacao = 0
   }
 
   desenha() {
@@ -57,8 +71,8 @@ class Piloto {
       deCastigo = 1
     }
 
-    if (!jogando || (deCastigo && Math.abs(this.rotacao) > Math.PI * 0.5)) {
-      jogando = false
+    if (deCastigo && Math.abs(this.rotacao) > Math.PI * 0.5) {
+      gameOver = true
       this.velocidade.rotacao = 5
       Tecla.ArrowUp = 1
       this.posicao.x -= velocidade * 5
@@ -71,7 +85,7 @@ class Piloto {
 
     this.posicao.y += this.velocidade.vertical
 
-    if (deCastigo && jogando) {
+    if (deCastigo && gameOver) {
       this.rotacao -= (this.rotacao - angulo) * 0.5
       this.velocidade.rotacao =
         this.velocidade.rotacao - (angulo - this.rotacao)
@@ -137,6 +151,28 @@ function desenhaCenario() {
   contexto.fill()
 
   piloto.desenha()
+
+  if (gameOver) {
+    vidas--
+    if (vidas === 0) {
+      // Game Over
+      contexto.font = '48px Arial'
+      contexto.fillStyle = 'red'
+      contexto.textAlign = 'center'
+      contexto.fillText('Game Over', width / 2, height / 2)
+      return
+    } else {
+      // Reiniciar o jogo
+      piloto.reiniciar()
+      gameOver = false
+    }
+  }
+
+  // Exibir quantidade de vidas
+  contexto.font = '24px Arial'
+  contexto.fillStyle = 'white'
+  contexto.textAlign = 'left'
+  contexto.fillText(`Vidas: ${vidas}`, 20, 30)
 
   requestAnimationFrame(desenhaCenario)
 }
